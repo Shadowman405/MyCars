@@ -12,6 +12,12 @@ import CoreData
 class ViewController: UIViewController {
     
     var context: NSManagedObjectContext!
+    lazy var dateFormatter:DateFormatter = {
+        let df = DateFormatter()
+        df.dateStyle = .short
+        df.timeStyle = .none
+        return df
+    }()
     
     @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var markLabel: UILabel!
@@ -27,6 +33,17 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         getDataFromFile()
         
+        let fetchRequest: NSFetchRequest<Car> = Car.fetchRequest()
+        let mark = segmentedControl.titleForSegment(at: 0)
+        fetchRequest.predicate = NSPredicate(format: "mark == %@", mark!)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            let selectedCar = results.first
+            insertDatafrom(selectedCar: selectedCar!)
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
     }
     
     
@@ -41,6 +58,8 @@ class ViewController: UIViewController {
     @IBAction func rateItPressed(_ sender: UIButton) {
         
     }
+    
+//MARK: - Work with Data
     
     private func getDataFromFile() {
         let fetchRequest: NSFetchRequest<Car> = Car.fetchRequest()
@@ -81,6 +100,17 @@ class ViewController: UIViewController {
                 car.tintColor = getColor(colorDictionary: colorDictionary)
             }
         }
+    }
+    
+    private func insertDatafrom(selectedCar car: Car) {
+        carImageView.image = UIImage(data: car.imageData!)
+        markLabel.text = car.mark
+        modelLabel.text = car.model
+        myChoiceImageView.isHidden = !(car.myChoice)
+        ratingLabel.text = "Rating: \(car.rating) / 10"
+        numberOfTripsLabel.text = "Number of trips \(car.timesDriven)"
+        lastTimeStartedLabel.text = "Last time started \(dateFormatter.string(from: car.lastStarted!))"
+        segmentedControl.tintColor = car.tintColor as? UIColor
     }
     
     private func getColor(colorDictionary: [String : Float]) -> UIColor {
