@@ -21,7 +21,17 @@ class ViewController: UIViewController {
         return df
     }()
     
-    @IBOutlet weak var segmentedControl: UISegmentedControl!
+    @IBOutlet weak var segmentedControl: UISegmentedControl! {
+        didSet {
+            updateSegmentedControll()
+            segmentedControl.selectedSegmentTintColor = .white
+            let whitetitleTextAtr = [NSAttributedString.Key.foregroundColor: UIColor.white]
+            let blacktitleTextAtr = [NSAttributedString.Key.foregroundColor: UIColor.black]
+            UISegmentedControl.appearance().setTitleTextAttributes(whitetitleTextAtr, for: .normal)
+            UISegmentedControl.appearance().setTitleTextAttributes(blacktitleTextAtr, for: .selected)
+        }
+    }
+    
     @IBOutlet weak var markLabel: UILabel!
     @IBOutlet weak var modelLabel: UILabel!
     @IBOutlet weak var carImageView: UIImageView!
@@ -35,22 +45,12 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         getDataFromFile()
         
-        let fetchRequest: NSFetchRequest<Car> = Car.fetchRequest()
-        let mark = segmentedControl.titleForSegment(at: 0)
-        fetchRequest.predicate = NSPredicate(format: "mark == %@", mark!)
-        
-        do {
-            let results = try context.fetch(fetchRequest)
-            car = results.first
-            insertDatafrom(selectedCar: car!)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
+
     }
     
     
     @IBAction func segmentedCtrlPressed(_ sender: UISegmentedControl) {
-        
+        updateSegmentedControll()
     }
     
     @IBAction func startEnginePressed(_ sender: UIButton) {
@@ -161,5 +161,18 @@ class ViewController: UIViewController {
         return UIColor(red: CGFloat(red / 255), green: CGFloat(green / 255), blue: CGFloat(blue / 255), alpha: 1.0)
     }
     
+    private func updateSegmentedControll() {
+        let fetchRequest: NSFetchRequest<Car> = Car.fetchRequest()
+        let mark = segmentedControl.titleForSegment(at: 0)
+        fetchRequest.predicate = NSPredicate(format: "mark == %@", mark!)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            car = results.first
+            insertDatafrom(selectedCar: car!)
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
+    }
 }
 
