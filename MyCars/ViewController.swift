@@ -12,6 +12,8 @@ import CoreData
 class ViewController: UIViewController {
     
     var context: NSManagedObjectContext!
+    var car: Car!
+    
     lazy var dateFormatter:DateFormatter = {
         let df = DateFormatter()
         df.dateStyle = .short
@@ -39,8 +41,8 @@ class ViewController: UIViewController {
         
         do {
             let results = try context.fetch(fetchRequest)
-            let selectedCar = results.first
-            insertDatafrom(selectedCar: selectedCar!)
+            car = results.first
+            insertDatafrom(selectedCar: car!)
         } catch let error as NSError {
             print(error.localizedDescription)
         }
@@ -52,11 +54,34 @@ class ViewController: UIViewController {
     }
     
     @IBAction func startEnginePressed(_ sender: UIButton) {
+        car.timesDriven += 1
+        car.lastStarted = Date()
         
+        do{
+            try context.save()
+            insertDatafrom(selectedCar: car)
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
     }
     
     @IBAction func rateItPressed(_ sender: UIButton) {
+        let alertController = UIAlertController(title: "Rate it", message: "Rate this car please", preferredStyle: .alert)
+        let rateAction = UIAlertAction(title: "Rate", style: .default, handler: { action in
+            if let text = alertController.textFields?.first?.text {
+                self.update(rating: (text as NSString).doubleValue)
+            }
+        })
+        let cancelAction = UIAlertAction(title: "Cancel", style: .default)
         
+        alertController.addTextField { textField in
+            textField.keyboardType = .numberPad
+        }
+        
+        alertController.addAction(rateAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
 //MARK: - Work with Data
@@ -110,7 +135,23 @@ class ViewController: UIViewController {
         ratingLabel.text = "Rating: \(car.rating) / 10"
         numberOfTripsLabel.text = "Number of trips \(car.timesDriven)"
         lastTimeStartedLabel.text = "Last time started \(dateFormatter.string(from: car.lastStarted!))"
-        segmentedControl.tintColor = car.tintColor as? UIColor
+        segmentedControl.backgroundColor = car.tintColor as? UIColor
+    }
+    
+    private func update(rating: Double) {
+        car.rating = rating
+        
+        do{
+            try context.save()
+            insertDatafrom(selectedCar: car)
+        } catch let error as NSError {
+            let alertController = UIAlertController(title: "Wrong value", message: "Wrong input", preferredStyle: .alert)
+            let okAction = UIAlertAction(title: "Ok", style: .default)
+            
+            alertController.addAction(okAction)
+            present(alertController, animated: true, completion: nil)
+            print(error.localizedDescription)
+        }
     }
     
     private func getColor(colorDictionary: [String : Float]) -> UIColor {
